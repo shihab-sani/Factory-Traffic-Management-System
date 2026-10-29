@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Junction A Dashboard</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #111; color: #eee; margin: 0; padding: 20px; }
+        h1 { margin-top: 0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: #1c1c1c; border-radius: 10px; padding: 16px; }
+        .intersection { position: relative; width: 300px; height: 300px; margin: auto; }
+        .arm { position: absolute; text-align: center; padding: 8px; border-radius: 6px; font-weight: bold; }
+        .north { top: 0; left: 50%; transform: translateX(-50%); width: 100px; }
+        .south { bottom: 0; left: 50%; transform: translateX(-50%); width: 100px; }
+        .east  { right: 0; top: 50%; transform: translateY(-50%); width: 100px; }
+        .west  { left: 0;  top: 50%; transform: translateY(-50%); width: 100px; }
+        .RED    { background: #b91c1c; color: #fff; }
+        .GREEN  { background: #15803d; color: #fff; }
+        .YELLOW { background: #a16207; color: #fff; }
+        button { background: #2563eb; color: white; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; margin: 2px; }
+        button:hover { background: #1d4ed8; }
+        select, input { padding: 6px; border-radius: 4px; border: 1px solid #333; background: #222; color: #eee; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+        .badge.EMERGENCY { background: #dc2626; }
+        .badge.MANUAL { background: #ea580c; }
+        .badge.AUTOMATIC { background: #16a34a; }
+        .badge.DEGRADED, .badge.FAILURE { background: #a16207; }
+        pre { background: #0a0a0a; padding: 10px; border-radius: 6px; overflow: auto; font-size: 12px; max-height: 200px; }
+    </style>
+</head>
+<body>
+<h1>🚦 Junction A</h1>
+
+<div class="grid">
+    <div class="card">
+        <h2>Status</h2>
+        <div id="status"></div>
+        <div class="intersection">
+            <div class="arm north" id="north">NORTH</div>
+            <div class="arm south" id="south">SOUTH</div>
+            <div class="arm east"  id="east">EAST</div>
+            <div class="arm west"  id="west">WEST</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Controls</h2>
+        <h3>Simulate Vehicle</h3>
+        <div>
+            Direction:
+            <select id="simDir"><option>NORTH</option><option>SOUTH</option><option>EAST</option><option>WEST</option></select>
+            Type:
+            <select id="simType"><option>FORKLIFT</option><option>TRUCK</option><option>EMPLOYEE_VEHICLE</option><option>EMERGENCY</option></select>
+            <button onclick="arrive()">Arrive</button>
+        </div>
+
+        <h3>Manual Override</h3>
+        <select id="manDir"><option>NORTH</option><option>SOUTH</option><option>EAST</option><option>WEST</option></select>
+        <button onclick="manual()">Manual GREEN request</button>
+        <button onclick="auto()">Return to Automatic</button>
+
+        <h3>Admin</h3>
+        <button onclick="tick()">Force tick</button>
+        <button onclick="offline()">Simulate controller OFFLINE</button>
+        <button onclick="online()">Simulate controller ONLINE</button>
+    </div>
+
+    <div class="card">
+        <h2>Recent Activity</h2>
+        <pre id="history">Loading…</pre>
+    </div>
+
+    <div class="card">
+        <h2>Raw Status</h2>
+        <pre id="raw">Loading…</pre>
+    </div>
+</div>
+
+<script>
+    const API = '/api';
+    let vehicleCounter = 1;
+
+    async function load() {
+        try {
+            const r = await fetch(`${API}/junctions/A/status`);
+            if (!r.ok) throw new Error('status fetch failed');
+            const s = await r.json();
+            render(s);
+            const h = await fetch(`${API}/junctions/A/history`).then(r => r.json());
+            document.getElementById('history').textContent = h.map(e =>
+                `${e.timestamp}  ${e.eventType}  ${e.details || ''}`).join('\n') || 'No events yet';
+            document.getElementById('raw').textContent = JSON.stringify(s, null, 2);
+        } catch (e) {
+            document.getElementById('raw').textContent = 'Error: ' + e.message;
+        }
+    }
+
+    function render(s) {
+        ['north','south','east','west'].forEach(d => {
+            const el = document.getElementById(d);
+            const st = s.actualSignals[d.toUpperCase()];
+            el.textContent = `${d.toUpperCase()}\n${st}`;
+            el.className = `arm ${d} ${st}`;
+            el.style.whiteSpace = 'pre-line';
+        });
+        document.getElementById('status').innerHTML = `
+    <p>Mode: <span class="badge ${s.mode}">${s.mode}</span></p>
+    <p>Phase: <b>${s.phase}</b></p>
+    <p>Controller: ${s.controllerStatus}</p>
+    <p>Queues: N=${s.queues.NORTH} S=${s.queues.SOUTH} E=${s.queues.EAST} W=${s.queues.WEST}</p>
+    ${s.emergencyActive ? '<p style="color:#f66"><b>🚨 EMERGENCY ACTIVE</b></p>' : ''}
+  `;
+    }
+
+    async function arrive() {
+        const dir = document.getElementById('simDir').value;
+        const type = document.getElementById('simType').value;
+        const id = 'VH-' + (vehicleCounter++);
+        await fetch(`${API}/sensor-events`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                eventId: 'evt-' + Date.now() + '-' + Math.random(),
+                junctionId: 'A', direction: dir, eventType: 'VEHICLE_ARRIVED',
+                vehicleId: id, vehicleType: type, sequenceNo: vehicleCounter,
+                timestamp: new Date().toISOString()
+            })
+        });
+        load();
+    }
+
+    async function manual() {
+        const dir = document.getElementById('manDir').value;
+        await fetch(`${API}/junctions/A/commands`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({command: 'MANUAL_GREEN_REQUEST', direction: dir})
+        });
+        load();
+    }
+
+    async function auto() {
+        await fetch(`${API}/junctions/A/commands`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({command: 'RETURN_TO_AUTOMATIC'})
+        });
+        load();
+    }
+
+    async function tick() {
+        await fetch(`${API}/admin/tick/A`, {method: 'POST'});
+        load();
+    }
+
+    async function offline() {
+        await fetch(`${API}/admin/set-controller/A?status=OFFLINE`, {method: 'POST'});
+        load();
+    }
+
+    async function online() {
+        await fetch(`${API}/admin/set-controller/A?status=ONLINE`, {method: 'POST'});
+        load();
+    }
+
+    load();
+    setInterval(load, 2000);
+</script>
+</body>
+</html>
