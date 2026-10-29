@@ -1,0 +1,337 @@
+{
+  "info": {
+    "_postman_id": "f4a8b2c1-1234-5678-9abc-def012345678",
+    "name": "Factory Traffic Management System",
+    "description": "Postman collection to test the Factory Traffic Assessment APIs and Scenarios.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Status & Monitoring",
+      "item": [
+        {
+          "name": "Get Junction Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/junctions/A/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "junctions",
+                "A",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/junctions/A/history",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "junctions",
+                "A",
+                "history"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Sensor Events (Traffic)",
+      "item": [
+        {
+          "name": "Simulate Vehicle Arrival (Normal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-1001\",\n  \"junctionId\": \"A\",\n  \"direction\": \"NORTH\",\n  \"eventType\": \"VEHICLE_ARRIVED\",\n  \"vehicleId\": \"VH-501\",\n  \"vehicleType\": \"TRUCK\",\n  \"sequenceNo\": 1,\n  \"timestamp\": \"2026-10-29T15:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/sensor-events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "sensor-events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Simulate EMERGENCY Arrival",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-emg-001\",\n  \"junctionId\": \"A\",\n  \"direction\": \"EAST\",\n  \"eventType\": \"VEHICLE_ARRIVED\",\n  \"vehicleId\": \"EMG-999\",\n  \"vehicleType\": \"EMERGENCY\",\n  \"sequenceNo\": 2,\n  \"timestamp\": \"2026-10-29T15:01:00Z\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/sensor-events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "sensor-events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Simulate Vehicle Cleared",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-clear-001\",\n  \"junctionId\": \"A\",\n  \"direction\": \"NORTH\",\n  \"eventType\": \"VEHICLE_CLEARED\",\n  \"vehicleId\": \"VH-501\",\n  \"sequenceNo\": 3,\n  \"timestamp\": \"2026-10-29T15:02:00Z\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/sensor-events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "sensor-events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Duplicate Event (Should be ignored)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-1001\",\n  \"junctionId\": \"A\",\n  \"direction\": \"NORTH\",\n  \"eventType\": \"VEHICLE_ARRIVED\",\n  \"vehicleId\": \"VH-501\",\n  \"vehicleType\": \"TRUCK\",\n  \"sequenceNo\": 1,\n  \"timestamp\": \"2026-10-29T15:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/sensor-events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "sensor-events"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Manual & Admin Controls",
+      "item": [
+        {
+          "name": "Request Manual Green (North)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"MANUAL_GREEN_REQUEST\",\n  \"direction\": \"NORTH\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/junctions/A/commands",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "junctions",
+                "A",
+                "commands"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Return to Automatic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"RETURN_TO_AUTOMATIC\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/junctions/A/commands",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "junctions",
+                "A",
+                "commands"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Controller Failures & ACKs",
+      "item": [
+        {
+          "name": "Simulate Controller OFFLINE",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/admin/set-controller/A?status=OFFLINE",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "admin",
+                "set-controller",
+                "A"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "OFFLINE"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Simulate Controller ONLINE",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4000/api/admin/set-controller/A?status=ONLINE",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "admin",
+                "set-controller",
+                "A"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ONLINE"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Simulate ACK from Physical Controller",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"commandId\": \"cmd-1234\",\n  \"junctionId\": \"A\",\n  \"status\": \"ACK\",\n  \"actualState\": \"GREEN\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:4000/api/controller-events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "controller-events"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

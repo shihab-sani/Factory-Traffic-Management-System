@@ -1,3 +1,13 @@
 spring:
   application:
     name: Factory-Traffic-Management
+
+traffic:
+  scheduler:
+    tick-interval-ms: 1000
+    green-duration-seconds: 10
+    yellow-duration-seconds: 4
+    all-red-duration-seconds: 2
+    command-ack-timeout-seconds: 10
+    starvation-threshold-seconds: 120
+
